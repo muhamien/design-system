@@ -13,6 +13,11 @@
 - **Default stack:** React + TypeScript + Tailwind CSS v4 + shadcn/ui (Radix primitives).
   If the target uses another stack (Vue, Svelte, plain HTML, native), reproduce the
   **same visual output** using the same tokens — don't copy framework structure blindly.
+- **Use shadcn/ui components as-is.** Install them with the CLI (`npx shadcn@latest add button card …`,
+  **new-york** style) and keep their **standard sizes and structure** (`data-slot`, lucide-react icons,
+  `focus-visible` rings, `aria-invalid` handling). The Grid identity comes from the **tokens** (§2) +
+  **layout conventions** (§7) — *not* from re-sizing components. Also install `tw-animate-css`
+  (overlay animations) and `sonner` (toasts).
 - **Tokens are law.** Never hardcode a hex/rgb color, font family, radius, or ad-hoc
   spacing that bypasses the tokens in §2. If a value isn't covered, derive it from a
   token (e.g. `color-mix(in srgb, var(--primary) 28%, transparent)`).
@@ -28,9 +33,9 @@ Grid is a precise, technical, shadcn-compatible system. Five pillars:
 
 1. **Hairline structure.** 1px `--border` lines frame and separate everything. Content
    lives in a centered max-width column with continuous left/right rails.
-2. **Monospaced annotations.** Labels, metadata, section numbers, table headers, badges,
-   and "eyebrow" lines use the **mono** font, **UPPERCASE**, with wide letter-spacing.
-   Body and headings use the **sans** font.
+2. **Monospaced annotations.** Section numbers, eyebrows, metadata captions, and structural
+   labels — the page *chrome* — use the **mono** font, **UPPERCASE**, with wide letter-spacing.
+   Body, headings, and the shadcn components themselves use the **sans** font.
 3. **One signal color.** A single restrained accent (`--primary`, forest green by
    default) for CTAs, focus rings, active/selected states. Everything else is neutral.
 4. **Flat & quiet.** No gradients. Shadows only on floating overlays. Low-chroma
@@ -109,6 +114,7 @@ Grid is a precise, technical, shadcn-compatible system. Five pillars:
 
 ```css
 @import "tailwindcss";
+@import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -138,9 +144,10 @@ Grid is a precise, technical, shadcn-compatible system. Five pillars:
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 }
@@ -180,7 +187,7 @@ Grid is a precise, technical, shadcn-compatible system. Five pillars:
 | Heading 3 | sans | 17          | 500    | normal   | Card / subsection title                        |
 | Body      | sans | 14 / 1.5    | 400    | normal   | Paragraphs (use `--muted-foreground` for secondary) |
 | Small     | sans | 13          | 400    | normal   | Captions, helper text (`--muted-foreground`)   |
-| Mono      | mono | 11–12       | 500    | 0.06em   | **UPPERCASE** labels, metadata, eyebrows (often `--primary`) |
+| Mono      | mono | 11–12       | 500    | 0.06em   | **UPPERCASE** chrome: section numbers, eyebrows, metadata captions (often `--primary`) |
 
 Hero headline may use `font-size: clamp(38px, 6vw, 62px)`.
 
@@ -191,109 +198,119 @@ Hero headline may use `font-size: clamp(38px, 6vw, 62px)`.
 `space-1 = 2px` · `space-2 = 4px` · `space-3 = 8px` · `space-4 = 12px` ·
 `space-5 = 16px` · `space-6 = 24px` · `space-7 = 32px` · `space-8 = 48px`
 
-Common paddings: section content `20–28px`, card padding `18px`, control padding
-`13px` horizontal.
+Common paddings: section content `20–28px`, card padding `24px` (shadcn `py-6`/`px-6`),
+control padding `12px` horizontal.
 
 ---
 
 ## 5. Radius scale
 
-`radius-sm 2px` · `radius-md 4px` (= base `--radius`) · `radius-lg 6px` ·
-`radius-xl 8px` · `radius-2xl 12px` · `radius-full 9999px`
+Base token `--radius` defaults to **4px** (customizable at runtime). The Tailwind radius
+utilities derive from it, matching shadcn:
 
-- Default everything to `var(--radius)`.
-- **Nested** elements (a thumb inside a track, an item inside a menu) use
-  `calc(var(--radius) - 1px)`.
-- `radius-full` only for: switch track, switch/radio dots, avatars, status pills.
+- `rounded-sm` = `calc(var(--radius) - 4px)` · `rounded-md` = `calc(var(--radius) - 2px)` ·
+  `rounded-lg` = `var(--radius)` · `rounded-xl` = `calc(var(--radius) + 4px)` · `rounded-full` = pill.
+- Keep the radius each shadcn component already ships with: `rounded-md` (buttons, inputs, menu items),
+  `rounded-lg` (tab list, dialog, table wrapper), `rounded-xl` (cards), `rounded-full`
+  (switch track, switch/radio dots, avatars, status pills).
+- Don't hand-pick radii — let the scale + the component defaults do the work. Bump the base
+  `--radius` (or the customizer slider) if you want everything rounder/sharper at once.
 
 ---
 
 ## 6. Component specs
 
-All components: `font-family` follows the role (sans for content, mono for labels),
-`border-radius: var(--radius)`, 1px borders, smooth `transition` on color/filter.
+Install with the shadcn CLI (`npx shadcn@latest add …`, new-york style) and use them
+**unmodified** — the Grid look comes from the tokens (§2) and layout (§7), not from
+re-sizing. Below is the standard shadcn sizing/structure so you know what each ships with
+and how to compose it. All components carry `data-slot`, lucide icons, `transition`, and
+`focus-visible:ring-ring/50 ring-[3px]` focus.
 
-### Button
-- Base: `inline-flex; gap 8px; font-sans; font-weight 500; letter-spacing .01em; border 1px solid transparent; rounded var(--radius)`.
-- **Sizes:** `sm` h30 / text12 / px12 · `default` h38 / text13 / px18 · `lg` h46 / text15 / px24 · `icon` 38×38.
-- **Variants:**
-  - `default` (primary): `bg --primary; text --primary-foreground`; hover `brightness(.93)`.
-  - `secondary`: `bg --secondary; text --secondary-foreground; border --border`; hover `bg --accent`.
-  - `outline`: transparent; `text --foreground; border --border`; hover `bg --accent` + `border --primary`.
-  - `ghost`: transparent; `text --foreground`; hover `bg --accent`.
-  - `destructive`: `bg --destructive; text --destructive-foreground`; hover `brightness(.93)`.
-  - `link`: transparent; `text --primary; underline; underline-offset 3px`; no border.
-- **Disabled:** `opacity .45; cursor not-allowed`.
+### Button — `add button`
+- Sizes: `default` h-9 / px-4 · `sm` h-8 / px-3 · `lg` h-10 / px-6 · `icon` size-9.
+  `text-sm font-medium`, `rounded-md`, `gap-2`; lucide icons auto-sized to `size-4`.
+- Variants: `default` (`bg-primary`), `secondary`, `outline` (border + `bg-background`),
+  `ghost`, `destructive`, `link`. Hover uses token opacity (`hover:bg-primary/90`,
+  `hover:bg-accent`). Disabled: `opacity-50`.
 
-### Input / Textarea / Select trigger
-- `h40` (textarea auto, padding 11/13px); `px13; text14; bg --card; text --foreground; border 1px --input; rounded var(--radius)`.
-- Placeholder: `--muted-foreground`.
-- **Focus:** `border-color --ring` + `box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent)`.
-- Select shows a muted `▾` chevron at right; appearance like an input when closed.
+### Input / Textarea — `add input textarea`
+- `h-9` (textarea `min-h-16`, auto-grows via `field-sizing-content`); `rounded-md`,
+  `border-input`, `bg-transparent` (dark `bg-input/30`), `text-sm`, `shadow-xs`.
+- Focus: `focus-visible:border-ring focus-visible:ring-ring/50 ring-[3px]`. Invalid: `aria-invalid:ring-destructive/20`.
 
-### Checkbox
-- `20×20; rounded calc(var(--radius) - 1px); border --input; bg --card`.
-- Checked: `bg + border --primary`; checkmark in `--primary-foreground`.
+### Select — `add select`
+- Trigger matches Input (`h-9`, `rounded-md`, `border-input`) with a lucide `ChevronDownIcon`.
+- Content is a popover (`bg-popover`, `rounded-md`, `shadow-md`) with `CheckIcon` indicators; animated.
 
-### Switch
-- Track `40×22; rounded-full`. Off: `bg --muted; border --border`. On: `bg + border --primary`.
-- Knob: `16px; white; box-shadow 0 1px 2px rgba(0,0,0,.3)`; slides left `2px → 20px`.
+### Checkbox — `add checkbox`
+- `size-4 rounded-[4px] border-input`; checked `bg-primary border-primary` with a lucide `CheckIcon`.
 
-### Radio
-- `20px circle; border --input; bg --card`. Selected: `border --primary` + `10px` inner dot `--primary`.
+### Switch — `add switch`
+- Track `h-[1.15rem] w-8 rounded-full`; off `bg-input`, on `bg-primary`.
+- Thumb `size-4 bg-background`, slides `translate-x-[calc(100%-2px)]`.
 
-### Badge
-- `font-mono; text 10px; tracking .06em; rounded var(--radius); padding 4px 9px`.
-- Variants: `default` (primary) · `secondary` (border) · `outline` · `destructive` · `accent`.
-- **Status pills:** OK → `bg --accent; text --accent-foreground; border color-mix(--primary 28%)`.
-  Bad → `bg color-mix(--destructive 14%); text --destructive; border color-mix(--destructive 30%)`.
+### Radio — `add radio-group`
+- `size-4 rounded-full border-input`; selected shows a `size-2 fill-primary` dot (lucide `CircleIcon`).
 
-### Card
-- `bg --card; text --card-foreground; border --border; rounded var(--radius)`.
-- Header and footer separated by 1px `--border` lines; padding ~18px.
-- Big stat numbers: `24px / 600 / tracking -.02em`; their labels are mono 11px uppercase muted.
+### Badge — `add badge`
+- `rounded-md border px-2 py-0.5 text-xs font-medium`. Variants: `default` (primary),
+  `secondary`, `destructive`, `outline`.
+- Status/"healthy" pill: use `secondary` (or className `bg-accent text-accent-foreground border-transparent`)
+  paired with a small `bg-primary` dot. Bad/down states: `destructive`.
 
-### Tabs (segmented control)
-- List: `inline-flex; bg --muted; border --border; rounded var(--radius); padding 3px; gap 2px`.
-- Trigger: `h32; text13; rounded calc(var(--radius) - 1px); text --muted-foreground`.
-- Active: `bg --card; text --foreground; box-shadow 0 1px 2px rgba(0,0,0,.12)`.
+### Card — `add card`
+- `rounded-xl border bg-card py-6 shadow-sm`, vertical `gap-6`.
+- Compose `CardHeader` / `CardTitle` / `CardDescription` / `CardAction` (top-right slot) /
+  `CardContent` / `CardFooter`. Add `border-b` on the header / `border-t` on the footer for
+  hairline-separated sections (shadcn auto-pads them). Big stat numbers: `text-2xl font-semibold tabular-nums`.
 
-### Table
-- Header row: `bg --muted; mono 10px; tracking .08em; --muted-foreground`.
-- Body rows: `border-b --border; text13`; hover `bg --accent`; cells `padding 12px 16px`.
-- Numeric columns: right-aligned, mono.
+### Tabs — `add tabs`
+- List `h-9 bg-muted rounded-lg p-[3px]`; triggers `flex-1 rounded-md text-sm font-medium`,
+  active `bg-background shadow-sm` (segmented control).
 
-### Dialog
-- Overlay: `rgba(0,0,0,.45)` + `backdrop-blur 2px`.
-- Content: `max-w 440px; bg --popover; border --border; rounded var(--radius); shadow 0 30px 60px -20px rgba(0,0,0,.5)`.
-- Header/footer hairline-separated; eyebrow = mono `--primary` UPPERCASE; title 18px/600; footer buttons right-aligned (ghost cancel + primary confirm).
+### Table — `add table`
+- Header cells `h-10 px-2 font-medium text-foreground`; rows `border-b hover:bg-muted/50`; cells `p-2`.
+- Right-align + `font-mono text-xs` for numeric columns; render status in a `Badge`.
+  Wrap in `rounded-lg border overflow-hidden`.
 
-### Dropdown menu
-- `bg --popover; border --border; rounded var(--radius); padding 5px; min-w 200px; shadow 0 12px 30px -8px rgba(0,0,0,.28)`.
-- Mono uppercase group label; items `text13; rounded calc(var(--radius) - 1px)`; hover `bg --accent`; optional right-aligned mono shortcut.
+### Dialog — `add dialog`
+- Overlay `bg-black/50` (animated). Content centered, `max-w-lg rounded-lg border p-6 gap-4 shadow-lg`,
+  with a built-in top-right close (`XIcon`).
+- Compose `DialogHeader` / `DialogTitle` (`text-lg font-semibold`) / `DialogDescription` /
+  `DialogFooter` (right-aligned: outline cancel + default confirm). Add a mono `--primary`
+  eyebrow inside the header for the Grid feel.
 
-### Tooltip
-- `bg --foreground; text --background; mono 11px; tracking .03em; rounded var(--radius); padding 7px 10px`.
+### Dropdown menu — `add dropdown-menu`
+- `bg-popover rounded-md border p-1 shadow-md`, `min-w-[8rem]`.
+- `DropdownMenuLabel`, `DropdownMenuSeparator`, items `rounded-sm px-2 py-1.5 text-sm` with
+  `focus:bg-accent`; `DropdownMenuShortcut` right-aligns a muted key.
 
-### Toast & inline Alert
-- Surface `bg --popover`/`--card; border --border` + **3px left border `--primary`**; rounded var(--radius).
-- Toast: fixed, `w320`, shadow, auto-dismiss (~3.2s). Alert: icon + title + muted description.
+### Tooltip — `add tooltip`
+- `bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-xs` with an arrow; animated.
+  (Wraps its own provider.)
 
-### Avatars
-- `38px circle; mono initials; 2px ring in --background`; overlap with `-10px` left margin.
-- Fills use chart colors (`--chart-1..5`); overflow chip (`+N`) uses `--muted` / `--muted-foreground`.
+### Toast — `add sonner`
+- Use **sonner**: render `<Toaster />` once (theme it from `--popover` / `--popover-foreground` /
+  `--border`) and fire with `toast("Title", { description })`.
 
-### Motion (subtle only)
-```css
-@keyframes dsPop  { from { opacity:0; transform: translateY(8px) scale(.98) } to { opacity:1; transform:none } }
-@keyframes dsFade { from { opacity:0 } to { opacity:1 } }
-@keyframes dsToast{ from { opacity:0; transform: translateY(12px) } to { opacity:1; transform:none } }
-```
-Overlays animate in with `dsPop`/`dsFade` (~120–160ms). Respect `prefers-reduced-motion`.
+### Alert (inline) — `add alert`
+- `Alert` / `AlertTitle` / `AlertDescription`: `rounded-lg border bg-card p-4 text-sm`, optional
+  leading lucide icon. Variants: `default`, `destructive`.
+
+### Avatars — `add avatar`
+- `size-8 rounded-full`; `AvatarFallback` defaults to `bg-muted`.
+- For a stack: overlap with `-ml-2.5` + `ring-2 ring-background`; color individual fallbacks with chart tokens.
+
+### Motion
+Animations ship via **tw-animate-css** — the standard shadcn utilities (`animate-in` /
+`animate-out`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*`). Overlays include them by
+default; respect `prefers-reduced-motion`.
 
 ---
 
 ## 7. Layout & page conventions
+
+This is where the Grid identity lives — apply it *around* the standard shadcn components.
 
 - Centered column: `max-width 1200px; margin 0 auto; horizontal padding 28px`.
 - Frame every major section with **continuous 1px left/right rails** (`border-left`/`border-right` in `--border`); separate stacked blocks with 1px bottom borders.
@@ -357,23 +374,23 @@ class toggle.
 
 **DO**
 - Use tokens for every color/font/radius; derive variants with `color-mix`.
-- Use mono + UPPERCASE + wide tracking for labels, metadata, eyebrows, table headers, badges.
+- Install shadcn/ui components (new-york) and use them **as shipped** — restyle via tokens, not by editing sizes.
+- Use mono + UPPERCASE + wide tracking for the page chrome (section numbers, eyebrows, metadata captions). Let shadcn components keep their standard sans typography.
 - Frame with 1px hairlines; keep surfaces flat.
-- Use `var(--radius)` (nested: `calc(var(--radius) - 1px)`).
-- Apply the focus style: `--ring` border + 3px `color-mix(--ring 22%)` shadow.
-- Hover filled buttons with `brightness(.93)`; hover quiet buttons with `bg --accent`.
+- Let the radius scale + each component's default corners do the work (`rounded-md` / `-lg` / `-xl`).
+- Keep shadcn's focus style (`focus-visible:ring-ring/50 ring-[3px]`) and token-opacity hovers (`hover:bg-primary/90`, `hover:bg-accent`).
 - Support light **and** dark; verify contrast in both.
 - Use semantic HTML, real labels/`for`, ARIA on overlays, full keyboard support.
 - Respect the spacing & radius scales.
 
 **DON'T**
 - Never hardcode hex/rgb, or introduce a second accent/brand color.
+- Never fork shadcn component sizing or structure — use them as installed; theme only through tokens.
 - Never use gradients, glows, or heavy shadows (shadows only on floating overlays).
 - Never use large/pill radii except where specified (full = switch, dots, avatars, pills).
-- Never mix font families arbitrarily — only sans (content) and mono (labels).
-- Never add decorative borders thicker than 1px (exception: the 3px primary accent edge on toast/alert).
-- Never override component sizing away from the specs in §6 without reason.
+- Never mix font families arbitrarily — only sans (content + components) and mono (chrome labels).
+- Never add decorative borders thicker than 1px.
 
 ---
 
-*Grid Design System · 22 semantic tokens · light + dark · Inter + JetBrains Mono.*
+*Grid Design System · 22 semantic tokens · light + dark · Inter + JetBrains Mono · standard shadcn/ui (new-york).*
