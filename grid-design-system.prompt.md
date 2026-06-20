@@ -367,12 +367,12 @@ class toggle.
 - Respect the spacing & radius scales.
 
 **DON'T**
-- ❌ Hardcode hex/rgb, or introduce a second accent/brand color.
-- ❌ Use gradients, glows, or heavy shadows (shadows only on floating overlays).
-- ❌ Use large/pill radii except where specified (full = switch, dots, avatars, pills).
-- ❌ Mix font families arbitrarily — only sans (content) and mono (labels).
-- ❌ Add decorative borders thicker than 1px (exception: the 3px primary accent edge on toast/alert).
-- ❌ Override component sizing away from the specs in §6 without reason.
+- Never hardcode hex/rgb, or introduce a second accent/brand color.
+- Never use gradients, glows, or heavy shadows (shadows only on floating overlays).
+- Never use large/pill radii except where specified (full = switch, dots, avatars, pills).
+- Never mix font families arbitrarily — only sans (content) and mono (labels).
+- Never add decorative borders thicker than 1px (exception: the 3px primary accent edge on toast/alert).
+- Never override component sizing away from the specs in §6 without reason.
 
 ---
 

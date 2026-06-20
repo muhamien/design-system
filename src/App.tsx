@@ -1,4 +1,5 @@
 import { Customizer } from "@/components/customizer"
+import { Toaster } from "@/components/ui/sonner"
 import { useTheme } from "@/components/theme-provider"
 import { ButtonsSection } from "@/components/sections/buttons"
 import { CardsSection } from "@/components/sections/cards"
@@ -62,6 +63,7 @@ export default function App() {
       </div>
 
       <Customizer />
+      <Toaster />
     </div>
   )
 }

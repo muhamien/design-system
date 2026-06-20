@@ -1,8 +1,17 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Section, SectionHeader } from "@/components/sections/section"
+import { cn } from "@/lib/utils"
 
 const stats = [
   { k: "REQ/S", v: "12.4k" },
@@ -23,44 +32,35 @@ export function CardsSection() {
       <div className="grid grid-cols-[1.3fr_1fr]">
         {/* status card */}
         <div className="border-r border-border px-[20px] py-[24px]">
-          <Card className="overflow-hidden">
-            <div className="flex items-start justify-between gap-[12px] border-b border-border p-[18px] pb-[14px]">
-              <div>
-                <div className="text-[16px] font-semibold tracking-[-.01em]">
-                  Edge Cluster — eu-west
-                </div>
-                <div className="mt-[3px] text-[13px] text-muted-foreground">
-                  14 nodes · last sync 2m ago
-                </div>
-              </div>
-              <span
-                className="inline-flex items-center gap-[6px] rounded-full border bg-accent px-[9px] py-[4px] font-mono text-[10px] tracking-[.08em] text-primary"
-                style={{
-                  borderColor: "color-mix(in srgb,var(--primary) 30%,transparent)",
-                }}
-              >
-                <span className="h-[6px] w-[6px] rounded-full bg-primary" />
-                HEALTHY
-              </span>
-            </div>
-            <div className="flex gap-[24px] p-[18px]">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Edge Cluster — eu-west</CardTitle>
+              <CardDescription>14 nodes · last sync 2m ago</CardDescription>
+              <CardAction>
+                <Badge variant="secondary" className="gap-1.5">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  Healthy
+                </Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="flex gap-[24px]">
               {stats.map((s) => (
                 <div key={s.k}>
-                  <div className="font-mono text-[11px] tracking-[.06em] text-muted-foreground">
+                  <div className="text-muted-foreground text-xs font-medium">
                     {s.k}
                   </div>
-                  <div className="mt-[4px] text-[24px] font-semibold tracking-[-.02em]">
+                  <div className="mt-1 text-2xl font-semibold tabular-nums tracking-[-.02em]">
                     {s.v}
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="flex gap-[10px] border-t border-border px-[18px] py-[14px]">
-              <Button className="h-[34px] px-[14px]">Inspect</Button>
-              <Button variant="ghost" className="h-[34px] border-border px-[14px]">
+            </CardContent>
+            <CardFooter className="gap-2 border-t">
+              <Button size="sm">Inspect</Button>
+              <Button size="sm" variant="outline">
                 Logs
               </Button>
-            </div>
+            </CardFooter>
           </Card>
         </div>
 
@@ -71,11 +71,13 @@ export function CardsSection() {
               BADGES
             </span>
             <div className="flex flex-wrap gap-[8px]">
-              <Badge>DEFAULT</Badge>
-              <Badge variant="secondary">SECONDARY</Badge>
-              <Badge variant="outline">OUTLINE</Badge>
-              <Badge variant="destructive">DESTRUCTIVE</Badge>
-              <Badge variant="accent">ACCENT</Badge>
+              <Badge>Default</Badge>
+              <Badge variant="secondary">Secondary</Badge>
+              <Badge variant="outline">Outline</Badge>
+              <Badge variant="destructive">Destructive</Badge>
+              <Badge className="border-transparent bg-accent text-accent-foreground">
+                Accent
+              </Badge>
             </div>
           </div>
 
@@ -87,17 +89,15 @@ export function CardsSection() {
               {avatars.map((a, i) => (
                 <Avatar
                   key={a.initials}
-                  className={i > 0 ? "-ml-[10px] border-2 border-background" : "border-2 border-background"}
+                  className={cn("ring-2 ring-background", i > 0 && "-ml-2.5")}
                 >
                   <AvatarFallback className="text-white" style={{ background: a.bg }}>
                     {a.initials}
                   </AvatarFallback>
                 </Avatar>
               ))}
-              <Avatar className="-ml-[10px] border-2 border-background">
-                <AvatarFallback className="bg-muted text-[11px] text-muted-foreground">
-                  +6
-                </AvatarFallback>
+              <Avatar className="-ml-2.5 ring-2 ring-background">
+                <AvatarFallback className="text-xs">+6</AvatarFallback>
               </Avatar>
             </div>
           </div>
