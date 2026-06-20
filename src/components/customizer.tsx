@@ -1,5 +1,7 @@
+import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "@/components/theme-provider"
+import { buildPrompt, promptFileName } from "@/lib/build-prompt"
 import {
   accentNames,
   accents,
@@ -43,6 +45,35 @@ export function Customizer() {
         ? "bg-card text-foreground shadow-[0_1px_2px_rgba(0,0,0,.14)]"
         : "bg-transparent text-muted-foreground"
     )
+
+  const handleDownload = () => {
+    const md = buildPrompt({ theme, accent, base, font, radius })
+    const url = URL.createObjectURL(
+      new Blob([md], { type: "text/markdown;charset=utf-8" })
+    )
+    const a = document.createElement("a")
+    a.href = url
+    a.download = promptFileName
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    toast("Prompt downloaded", {
+      description: `${accent} · ${base} · ${font} · ${radius}px`,
+    })
+  }
+
+  const handleCopy = async () => {
+    const md = buildPrompt({ theme, accent, base, font, radius })
+    try {
+      await navigator.clipboard.writeText(md)
+      toast("Prompt copied", { description: "Paste it above your build task." })
+    } catch {
+      toast("Copy failed", {
+        description: "Clipboard unavailable — use Download instead.",
+      })
+    }
+  }
 
   return (
     <>
@@ -204,8 +235,25 @@ export function Customizer() {
           </div>
         </div>
 
-        <div className="border-t border-border px-[18px] py-[12px] font-mono text-[9px] tracking-[.12em] text-muted-foreground">
-          GRID · LIVE TOKENS
+        <div className="flex flex-col gap-[9px] border-t border-border px-[18px] py-[14px]">
+          <div className="flex items-center justify-between font-mono text-[9px] tracking-[.12em] text-muted-foreground">
+            <span>AI BUILD PROMPT</span>
+            <span>
+              {accent.toUpperCase()} · {base.toUpperCase()} · {radius}PX
+            </span>
+          </div>
+          <button
+            onClick={handleDownload}
+            className="flex h-[32px] w-full cursor-pointer items-center justify-center gap-[7px] rounded-[calc(var(--radius)-1px)] border-none bg-primary font-mono text-[10px] tracking-[.1em] text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            ↓ DOWNLOAD PROMPT
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex h-[32px] w-full cursor-pointer items-center justify-center gap-[7px] rounded-[calc(var(--radius)-1px)] border border-border bg-secondary font-mono text-[10px] tracking-[.1em] text-secondary-foreground transition-colors hover:bg-accent"
+          >
+            ⧉ COPY TO CLIPBOARD
+          </button>
         </div>
       </div>
 
