@@ -1,5 +1,4 @@
-import type { CSSProperties } from "react"
-
+import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -37,49 +36,32 @@ const tabs = [
   { id: "settings", label: "Settings" },
 ]
 
-function statusStyle(ok: boolean): CSSProperties {
-  return ok
-    ? {
-        background: "var(--accent)",
-        color: "var(--accent-foreground)",
-        borderColor: "color-mix(in srgb,var(--primary) 28%,transparent)",
-      }
-    : {
-        background: "color-mix(in srgb,var(--destructive) 14%,transparent)",
-        color: "var(--destructive)",
-        borderColor: "color-mix(in srgb,var(--destructive) 30%,transparent)",
-      }
-}
-
 function DataTable({ rows }: { rows: Row[] }) {
   return (
-    <div className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+    <div className="overflow-hidden rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>SERVICE</TableHead>
-            <TableHead className="w-[110px]">REGION</TableHead>
-            <TableHead className="w-[90px] text-right">P99</TableHead>
-            <TableHead className="w-[120px] text-right">STATUS</TableHead>
+            <TableHead>Service</TableHead>
+            <TableHead>Region</TableHead>
+            <TableHead className="text-right">P99</TableHead>
+            <TableHead className="text-right">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((r) => (
             <TableRow key={r.name}>
               <TableCell className="font-medium">{r.name}</TableCell>
-              <TableCell className="font-mono text-[12px] text-muted-foreground">
+              <TableCell className="text-muted-foreground font-mono text-xs">
                 {r.region}
               </TableCell>
-              <TableCell className="text-right font-mono text-[12px]">
+              <TableCell className="text-right font-mono text-xs">
                 {r.p99}
               </TableCell>
               <TableCell className="text-right">
-                <span
-                  className="rounded-[var(--radius)] border px-[8px] py-[3px] font-mono text-[10px] tracking-[.06em]"
-                  style={statusStyle(r.ok)}
-                >
+                <Badge variant={r.ok ? "secondary" : "destructive"}>
                   {r.status}
-                </span>
+                </Badge>
               </TableCell>
             </TableRow>
           ))}

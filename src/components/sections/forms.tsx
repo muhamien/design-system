@@ -41,7 +41,7 @@ export function FormsSection() {
           <div className="flex flex-col gap-[8px]">
             <Caption>DEPLOY TARGET</Caption>
             <Select defaultValue="Production">
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

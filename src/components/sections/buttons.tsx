@@ -1,3 +1,5 @@
+import { ArrowRightIcon, PlusIcon } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Section, SectionHeader } from "@/components/sections/section"
 
@@ -13,8 +15,8 @@ export function ButtonsSection() {
           <Button variant="outline">Outline</Button>
           <Button variant="ghost">Ghost</Button>
           <Button variant="destructive">Destructive</Button>
-          <Button variant="link" className="gap-[6px] px-[6px]">
-            Link →
+          <Button variant="link">
+            Link <ArrowRightIcon />
           </Button>
         </div>
         {/* sizes */}
@@ -22,13 +24,8 @@ export function ButtonsSection() {
           <Button size="sm">Small</Button>
           <Button>Default</Button>
           <Button size="lg">Large</Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            aria-label="icon"
-            className="border-border text-[16px]"
-          >
-            ＋
+          <Button size="icon" variant="secondary" aria-label="Add">
+            <PlusIcon />
           </Button>
           <Button disabled>Disabled</Button>
         </div>
