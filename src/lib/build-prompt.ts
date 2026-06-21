@@ -27,7 +27,12 @@ export type PromptConfig = {
   base: BaseName
   font: FontName
   radius: number
+  /** When true, --radius is emitted as a full pill (9999px) regardless of radius. */
+  fullRounded?: boolean
 }
+
+/** The emitted --radius value: a full pill, or the numeric slider value. */
+const radiusValue = (cfg: PromptConfig) => (cfg.fullRounded ? "9999px" : `${cfg.radius}px`)
 
 export const promptFileName = "grid-design-system.prompt.md"
 
@@ -127,7 +132,7 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
   // Radius + fonts live only on :root (light) and are shared by both modes.
   if (mode === "light") {
     rows.push(
-      ["--radius", `${cfg.radius}px`],
+      ["--radius", radiusValue(cfg)],
       ["--font-sans", fonts[cfg.font].sans],
       ["--font-mono", fonts[cfg.font].mono]
     )
@@ -154,7 +159,7 @@ export function buildPrompt(cfg: PromptConfig): string {
   const configNote =
     "> **Active configuration** — generated from the live customizer: " +
     `**${modeLabel}** mode · **${accentLabel}** accent · **${cfg.base}** base · ` +
-    `**${cfg.font}** typeface · **${cfg.radius}px** radius. ` +
+    `**${cfg.font}** typeface · **${cfg.fullRounded ? "full-rounded" : `${cfg.radius}px`}** radius. ` +
     "These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
     "defaults below — re-export from the customizer whenever you change them."
 
@@ -173,11 +178,14 @@ export function buildPrompt(cfg: PromptConfig): string {
         `<link href="${fontHref}" rel="stylesheet" />`
       )
       // §5 — default radius
-      .replace("defaults to **4px**", `defaults to **${cfg.radius}px**`)
+      .replace(
+        "defaults to **4px**",
+        `defaults to **${cfg.fullRounded ? "9999px (full rounded)" : `${cfg.radius}px`}**`
+      )
       // §8 — applyTheme defaults match the current selection
       .replace(
         /function applyTheme\(\{[^}]*\}\)/,
-        `function applyTheme({ mode='${cfg.theme}', accent='${cfg.accent}', base='${cfg.base}', font='${cfg.font}', radius=${cfg.radius} })`
+        `function applyTheme({ mode='${cfg.theme}', accent='${cfg.accent}', base='${cfg.base}', font='${cfg.font}', radius=${cfg.fullRounded ? 9999 : cfg.radius} })`
       )
       // footer — typeface label
       .replace("Inter + JetBrains Mono", fontLabel)

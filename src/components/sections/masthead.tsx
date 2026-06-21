@@ -1,9 +1,19 @@
 import { useTheme } from "@/components/theme-provider"
+import { fonts } from "@/lib/theme"
+
+const familyName = (css: string) => css.split(",")[0].replace(/['"]/g, "").trim()
 
 export function Masthead() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, font, toggleTheme } = useTheme()
   const themeLabel = theme === "light" ? "LIGHT" : "DARK"
   const themeToggleLabel = theme === "light" ? "◐ DARK" : "◑ LIGHT"
+
+  // Live typeface chip — tracks the customizer instead of a hardcoded label.
+  const sansName = familyName(fonts[font].sans)
+  const monoName = familyName(fonts[font].mono)
+  const fontChip = (sansName === monoName ? sansName : `${sansName} · ${monoName}`).toUpperCase()
+  const chipClass =
+    "rounded-[var(--radius)] border border-border px-[11px] py-[7px] font-mono text-[11px] tracking-[.06em] text-muted-foreground"
 
   return (
     <header className="border-l border-r border-border bg-[color-mix(in_srgb,var(--background)_78%,transparent)] backdrop-blur-[2px]">
@@ -40,16 +50,15 @@ export function Masthead() {
           value below is a real design token, mapped 1:1 to CSS custom properties.
         </p>
         <div className="mt-[28px] flex flex-wrap gap-[10px]">
-          {["22 SEMANTIC TOKENS", "LIGHT · DARK", "INTER · JETBRAINS MONO"].map(
-            (chip) => (
-              <div
-                key={chip}
-                className="rounded-[var(--radius)] border border-border px-[11px] py-[7px] font-mono text-[11px] tracking-[.06em] text-muted-foreground"
-              >
-                {chip}
-              </div>
-            )
-          )}
+          <div className={chipClass}>22 SEMANTIC TOKENS</div>
+          {/* mode chip — active side emphasised, follows the live theme */}
+          <div className={chipClass}>
+            <span className={theme === "light" ? "text-foreground" : undefined}>LIGHT</span>
+            <span className="opacity-40"> · </span>
+            <span className={theme === "dark" ? "text-foreground" : undefined}>DARK</span>
+          </div>
+          {/* typeface chip — live with the selected font */}
+          <div className={chipClass}>{fontChip}</div>
         </div>
       </div>
     </header>

@@ -21,6 +21,8 @@ type ThemeState = {
   customAccent: string | null
   font: FontName
   radius: number
+  /** When true, corners are fully rounded (pill) regardless of `radius`. */
+  fullRounded: boolean
   gridOverlay: boolean
   panelOpen: boolean
 }
@@ -33,6 +35,7 @@ type ThemeContextValue = ThemeState & {
   setCustomAccent: (hex: string | null) => void
   setFont: (f: FontName) => void
   setRadius: (r: number) => void
+  toggleFullRounded: () => void
   toggleGrid: () => void
   togglePanel: () => void
 }
@@ -56,6 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [customAccent, setCustomAccent] = useState<string | null>(null)
   const [font, setFont] = useState<FontName>("Inter")
   const [radius, setRadius] = useState<number>(4)
+  const [fullRounded, setFullRounded] = useState<boolean>(false)
   const [gridOverlay, setGridOverlay] = useState<boolean>(true)
   const [panelOpen, setPanelOpen] = useState<boolean>(true)
 
@@ -74,7 +78,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     s.setProperty("--ring", a.ring)
     s.setProperty("--accent", a.accent)
     s.setProperty("--accent-foreground", a.accentFg)
-    s.setProperty("--radius", `${radius}px`)
+    // 9999px reads as a full pill at any element size; otherwise the slider px.
+    s.setProperty("--radius", fullRounded ? "9999px" : `${radius}px`)
 
     // Chart palette: a custom accent harmonises all 5 series around its hue;
     // presets keep chart-1 on-accent and restore the fixed data palette.
@@ -107,7 +112,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     s.setProperty("--muted-foreground", b.mutedFg)
     s.setProperty("--border", b.border)
     s.setProperty("--input", b.border)
-  }, [theme, base, accent, customAccent, font, radius])
+  }, [theme, base, accent, customAccent, font, radius, fullRounded])
 
   const setTheme = (t: ThemeMode) => {
     setThemeState(t)
@@ -131,6 +136,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     customAccent,
     font,
     radius,
+    fullRounded,
     gridOverlay,
     panelOpen,
     setTheme,
@@ -140,6 +146,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setCustomAccent,
     setFont,
     setRadius,
+    toggleFullRounded: () => setFullRounded((v) => !v),
     toggleGrid: () => setGridOverlay((v) => !v),
     togglePanel: () => setPanelOpen((v) => !v),
   }

@@ -31,6 +31,7 @@ export function Customizer() {
     customAccent,
     font,
     radius,
+    fullRounded,
     gridOverlay,
     panelOpen,
     setTheme,
@@ -39,6 +40,7 @@ export function Customizer() {
     setCustomAccent,
     setFont,
     setRadius,
+    toggleFullRounded,
     toggleGrid,
     togglePanel,
   } = useTheme()
@@ -66,9 +68,10 @@ export function Customizer() {
     )
 
   const accentLabel = customAccent ? normalizeHex(customAccent).toUpperCase() : accent
+  const radiusLabel = fullRounded ? "FULL" : `${radius}px`
 
   const handleDownload = () => {
-    const md = buildPrompt({ theme, accent, customAccent, base, font, radius })
+    const md = buildPrompt({ theme, accent, customAccent, base, font, radius, fullRounded })
     const url = URL.createObjectURL(
       new Blob([md], { type: "text/markdown;charset=utf-8" })
     )
@@ -80,12 +83,12 @@ export function Customizer() {
     a.remove()
     URL.revokeObjectURL(url)
     toast("Prompt downloaded", {
-      description: `${accentLabel} · ${base} · ${font} · ${radius}px`,
+      description: `${accentLabel} · ${base} · ${font} · ${radiusLabel}`,
     })
   }
 
   const handleCopy = async () => {
-    const md = buildPrompt({ theme, accent, customAccent, base, font, radius })
+    const md = buildPrompt({ theme, accent, customAccent, base, font, radius, fullRounded })
     try {
       await navigator.clipboard.writeText(md)
       toast("Prompt copied", { description: "Paste it above your build task." })
@@ -277,7 +280,9 @@ export function Customizer() {
           <div className="flex flex-col gap-[11px]">
             <div className="flex items-center justify-between">
               <Caption>RADIUS</Caption>
-              <span className="font-mono text-[10px] text-foreground">{radius}px</span>
+              <span className="font-mono text-[10px] text-foreground">
+                {fullRounded ? "FULL" : `${radius}px`}
+              </span>
             </div>
             <input
               type="range"
@@ -285,13 +290,32 @@ export function Customizer() {
               max={16}
               value={radius}
               onChange={(e) => setRadius(+e.target.value)}
-              className="w-full cursor-pointer"
+              disabled={fullRounded}
+              className="w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
               style={{ accentColor: "var(--primary)" }}
             />
             <div className="flex items-center gap-[10px]">
               <span className="h-[26px] w-[40px] flex-none rounded-[var(--radius)] border border-primary bg-accent" />
               <span className="h-px flex-1 bg-border" />
             </div>
+            <button
+              onClick={toggleFullRounded}
+              className={cn(
+                "flex h-[30px] w-full cursor-pointer items-center justify-between rounded-[calc(var(--radius)-1px)] border px-[11px] font-mono text-[10px] tracking-[.08em] transition-colors",
+                fullRounded
+                  ? "border-primary bg-accent text-accent-foreground"
+                  : "border-border bg-transparent text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <span>FULL ROUNDED</span>
+              <span
+                className="h-[16px] w-[28px] flex-none rounded-full border"
+                style={{
+                  borderColor: fullRounded ? "var(--primary)" : "var(--border)",
+                  background: fullRounded ? "var(--primary)" : "transparent",
+                }}
+              />
+            </button>
           </div>
 
           {/* GRID OVERLAY */}
@@ -305,7 +329,7 @@ export function Customizer() {
           <div className="flex items-center justify-between font-mono text-[9px] tracking-[.12em] text-muted-foreground">
             <span>AI BUILD PROMPT</span>
             <span>
-              {accentLabel.toUpperCase()} · {base.toUpperCase()} · {radius}PX
+              {accentLabel.toUpperCase()} · {base.toUpperCase()} · {radiusLabel.toUpperCase()}
             </span>
           </div>
           <button
