@@ -78,8 +78,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     s.setProperty("--ring", a.ring)
     s.setProperty("--accent", a.accent)
     s.setProperty("--accent-foreground", a.accentFg)
-    // 9999px reads as a full pill at any element size; otherwise the slider px.
-    s.setProperty("--radius", fullRounded ? "9999px" : `${radius}px`)
+    // --radius always follows the slider; the optional pill (status badges, tabs,
+    // buttons) is applied selectively via the data-pill rule in index.css.
+    s.setProperty("--radius", `${radius}px`)
+    root.toggleAttribute("data-pill", fullRounded)
 
     // Chart palette: a custom accent harmonises all 5 series around its hue;
     // presets keep chart-1 on-accent and restore the fixed data palette.

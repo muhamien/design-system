@@ -68,7 +68,7 @@ export function Customizer() {
     )
 
   const accentLabel = customAccent ? normalizeHex(customAccent).toUpperCase() : accent
-  const radiusLabel = fullRounded ? "FULL" : `${radius}px`
+  const radiusLabel = fullRounded ? `${radius}px · pill` : `${radius}px`
 
   const handleDownload = () => {
     const md = buildPrompt({ theme, accent, customAccent, base, font, radius, fullRounded })
@@ -280,9 +280,7 @@ export function Customizer() {
           <div className="flex flex-col gap-[11px]">
             <div className="flex items-center justify-between">
               <Caption>RADIUS</Caption>
-              <span className="font-mono text-[10px] text-foreground">
-                {fullRounded ? "FULL" : `${radius}px`}
-              </span>
+              <span className="font-mono text-[10px] text-foreground">{radius}px</span>
             </div>
             <input
               type="range"
@@ -290,8 +288,7 @@ export function Customizer() {
               max={16}
               value={radius}
               onChange={(e) => setRadius(+e.target.value)}
-              disabled={fullRounded}
-              className="w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full cursor-pointer"
               style={{ accentColor: "var(--primary)" }}
             />
             <div className="flex items-center gap-[10px]">
@@ -300,6 +297,7 @@ export function Customizer() {
             </div>
             <button
               onClick={toggleFullRounded}
+              title="Fully round status badges, tabs and buttons (others keep the radius above)"
               className={cn(
                 "flex h-[30px] w-full cursor-pointer items-center justify-between rounded-[calc(var(--radius)-1px)] border px-[11px] font-mono text-[10px] tracking-[.08em] transition-colors",
                 fullRounded
@@ -316,6 +314,9 @@ export function Customizer() {
                 }}
               />
             </button>
+            <span className="font-mono text-[9px] leading-[1.4] tracking-[.04em] text-muted-foreground">
+              Pills status badges, tabs &amp; buttons only — others follow the slider.
+            </span>
           </div>
 
           {/* GRID OVERLAY */}

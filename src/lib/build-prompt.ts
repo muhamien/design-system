@@ -31,10 +31,16 @@ export type PromptConfig = {
   fullRounded?: boolean
 }
 
-/** The emitted --radius value: a full pill, or the numeric slider value. */
-const radiusValue = (cfg: PromptConfig) => (cfg.fullRounded ? "9999px" : `${cfg.radius}px`)
-
 export const promptFileName = "grid-design-system.prompt.md"
+
+// CSS that reproduces the "full rounded" toggle: only status badges, tabs and
+// buttons go fully pill, everything else keeps the --radius scale.
+const PILL_OVERRIDE_CSS = [
+  '[data-slot="button"], [data-slot="badge"],',
+  '[data-slot="tabs-list"], [data-slot="tabs-trigger"] {',
+  "  border-radius: 9999px;",
+  "}",
+].join("\n")
 
 // Tokens the customizer does NOT expose — fixed per mode, mirroring index.css.
 // (destructive is now harmonised per-accent — see deriveDestructive below.)
@@ -132,7 +138,7 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
   // Radius + fonts live only on :root (light) and are shared by both modes.
   if (mode === "light") {
     rows.push(
-      ["--radius", radiusValue(cfg)],
+      ["--radius", `${cfg.radius}px`],
       ["--font-sans", fonts[cfg.font].sans],
       ["--font-mono", fonts[cfg.font].mono]
     )
@@ -159,9 +165,19 @@ export function buildPrompt(cfg: PromptConfig): string {
   const configNote =
     "> **Active configuration** — generated from the live customizer: " +
     `**${modeLabel}** mode · **${accentLabel}** accent · **${cfg.base}** base · ` +
-    `**${cfg.font}** typeface · **${cfg.fullRounded ? "full-rounded" : `${cfg.radius}px`}** radius. ` +
-    "These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
+    `**${cfg.font}** typeface · **${cfg.radius}px** radius` +
+    (cfg.fullRounded ? " · **full-rounded** status badges, tabs & buttons" : "") +
+    ". These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
     "defaults below — re-export from the customizer whenever you change them."
+
+  // §5 addendum describing the active full-rounded toggle (selective pill).
+  const fullRoundedNote = cfg.fullRounded
+    ? "\n- **Full-rounded toggle (active):** status badges, tabs and buttons are fully " +
+      "pill regardless of `--radius`; every other component keeps the scale above. " +
+      "Reproduce with:\n\n```css\n" +
+      PILL_OVERRIDE_CSS +
+      "\n```"
+    : ""
 
   return (
     promptTemplate
@@ -177,15 +193,16 @@ export function buildPrompt(cfg: PromptConfig): string {
         /<link href="https:\/\/fonts\.googleapis\.com[^"]*" rel="stylesheet" \/>/,
         `<link href="${fontHref}" rel="stylesheet" />`
       )
-      // §5 — default radius
+      // §5 — default radius + optional full-rounded addendum
+      .replace("defaults to **4px**", `defaults to **${cfg.radius}px**`)
       .replace(
-        "defaults to **4px**",
-        `defaults to **${cfg.fullRounded ? "9999px (full rounded)" : `${cfg.radius}px`}**`
+        "everything rounder/sharper at once.",
+        `everything rounder/sharper at once.${fullRoundedNote}`
       )
       // §8 — applyTheme defaults match the current selection
       .replace(
         /function applyTheme\(\{[^}]*\}\)/,
-        `function applyTheme({ mode='${cfg.theme}', accent='${cfg.accent}', base='${cfg.base}', font='${cfg.font}', radius=${cfg.fullRounded ? 9999 : cfg.radius} })`
+        `function applyTheme({ mode='${cfg.theme}', accent='${cfg.accent}', base='${cfg.base}', font='${cfg.font}', radius=${cfg.radius} })`
       )
       // footer — typeface label
       .replace("Inter + JetBrains Mono", fontLabel)

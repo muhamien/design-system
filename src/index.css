@@ -131,6 +131,16 @@
   }
 }
 
+/* Full-rounded toggle — when <html data-pill> is set (customizer), only status
+   badges, tabs and buttons go fully pill; everything else keeps the --radius
+   scale. Unlayered so it wins over the rounded-* utilities. */
+[data-pill] [data-slot="button"],
+[data-pill] [data-slot="badge"],
+[data-pill] [data-slot="tabs-list"],
+[data-pill] [data-slot="tabs-trigger"] {
+  border-radius: 9999px;
+}
+
 /* Overlay motion — ported 1:1 from the prototype. */
 @keyframes dsPop {
   from {
