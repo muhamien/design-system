@@ -8,7 +8,11 @@ import promptTemplate from "../../grid-design-system.prompt.md?raw"
 import {
   accents,
   bases,
+  deriveAccent,
+  deriveCharts,
+  deriveDestructive,
   fonts,
+  normalizeHex,
   type AccentName,
   type BaseName,
   type FontName,
@@ -18,19 +22,31 @@ import {
 export type PromptConfig = {
   theme: ThemeMode
   accent: AccentName
+  /** User-picked hex overriding the preset accent, or null for a preset. */
+  customAccent?: string | null
   base: BaseName
   font: FontName
   radius: number
+  /** When true, --radius is emitted as a full pill (9999px) regardless of radius. */
+  fullRounded?: boolean
 }
 
 export const promptFileName = "grid-design-system.prompt.md"
 
+// CSS that reproduces the "full rounded" toggle: only status badges, tabs and
+// buttons go fully pill, everything else keeps the --radius scale.
+const PILL_OVERRIDE_CSS = [
+  '[data-slot="button"], [data-slot="badge"],',
+  '[data-slot="tabs-list"], [data-slot="tabs-trigger"] {',
+  "  border-radius: 9999px;",
+  "}",
+].join("\n")
+
 // Tokens the customizer does NOT expose — fixed per mode, mirroring index.css.
+// (destructive is now harmonised per-accent — see deriveDestructive below.)
 const fixedTokens: Record<
   ThemeMode,
   {
-    destructive: string
-    destructiveFg: string
     success: string
     warning: string
     chart2: string
@@ -40,8 +56,6 @@ const fixedTokens: Record<
   }
 > = {
   light: {
-    destructive: "#b03a2b",
-    destructiveFg: "#fdf6f5",
     success: "#2e6b48",
     warning: "#9a6a12",
     chart2: "#6a994e",
@@ -50,8 +64,6 @@ const fixedTokens: Record<
     chart5: "#a23b6b",
   },
   dark: {
-    destructive: "#d4543f",
-    destructiveFg: "#160605",
     success: "#5aa777",
     warning: "#d2a23a",
     chart2: "#8cbf6a",
@@ -84,9 +96,15 @@ const familyName = (css: string) => css.split(",")[0].replace(/['"]/g, "").trim(
 // Build a :root / .dark token list from the selected accent + base (+ radius/font
 // on :root only), in the exact order index.css declares them.
 function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
-  const a = accents[cfg.accent][mode]
+  const a = cfg.customAccent ? deriveAccent(cfg.customAccent, mode) : accents[cfg.accent][mode]
   const b = bases[cfg.base][mode]
   const fx = fixedTokens[mode]
+  // Custom accents harmonise all 5 chart series; presets keep the fixed palette.
+  const charts = cfg.customAccent
+    ? deriveCharts(cfg.customAccent, mode)
+    : [a.chart1, fx.chart2, fx.chart3, fx.chart4, fx.chart5]
+  // Danger red harmonised to the active accent so the palette reads as one theme.
+  const dz = deriveDestructive(cfg.customAccent ?? a.primary, mode)
 
   const rows: [string, string][] = [
     ["--background", b.bg],
@@ -103,18 +121,18 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
     ["--muted-foreground", b.mutedFg],
     ["--accent", a.accent],
     ["--accent-foreground", a.accentFg],
-    ["--destructive", fx.destructive],
-    ["--destructive-foreground", fx.destructiveFg],
+    ["--destructive", dz.color],
+    ["--destructive-foreground", dz.fg],
     ["--success", fx.success],
     ["--warning", fx.warning],
     ["--border", b.border],
     ["--input", b.border],
     ["--ring", a.ring],
-    ["--chart-1", a.chart1],
-    ["--chart-2", fx.chart2],
-    ["--chart-3", fx.chart3],
-    ["--chart-4", fx.chart4],
-    ["--chart-5", fx.chart5],
+    ["--chart-1", charts[0]],
+    ["--chart-2", charts[1]],
+    ["--chart-3", charts[2]],
+    ["--chart-4", charts[3]],
+    ["--chart-5", charts[4]],
   ]
 
   // Radius + fonts live only on :root (light) and are shared by both modes.
@@ -131,6 +149,12 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
 
 export function buildPrompt(cfg: PromptConfig): string {
   const modeLabel = cfg.theme === "light" ? "Light" : "Dark"
+  const accentLabel = cfg.customAccent
+    ? `Custom ${normalizeHex(cfg.customAccent)}`
+    : cfg.accent
+  const accentDesc = cfg.customAccent
+    ? `a custom ${normalizeHex(cfg.customAccent)}`
+    : accentPhrase[cfg.accent]
   const sans = familyName(fonts[cfg.font].sans)
   const mono = familyName(fonts[cfg.font].mono)
   const fontLabel = sans === mono ? sans : `${sans} + ${mono}`
@@ -140,17 +164,27 @@ export function buildPrompt(cfg: PromptConfig): string {
 
   const configNote =
     "> **Active configuration** — generated from the live customizer: " +
-    `**${modeLabel}** mode · **${cfg.accent}** accent · **${cfg.base}** base · ` +
-    `**${cfg.font}** typeface · **${cfg.radius}px** radius. ` +
-    "These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
+    `**${modeLabel}** mode · **${accentLabel}** accent · **${cfg.base}** base · ` +
+    `**${cfg.font}** typeface · **${cfg.radius}px** radius` +
+    (cfg.fullRounded ? " · **full-rounded** status badges, tabs & buttons" : "") +
+    ". These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
     "defaults below — re-export from the customizer whenever you change them."
+
+  // §5 addendum describing the active full-rounded toggle (selective pill).
+  const fullRoundedNote = cfg.fullRounded
+    ? "\n- **Full-rounded toggle (active):** status badges, tabs and buttons are fully " +
+      "pill regardless of `--radius`; every other component keeps the scale above. " +
+      "Reproduce with:\n\n```css\n" +
+      PILL_OVERRIDE_CSS +
+      "\n```"
+    : ""
 
   return (
     promptTemplate
       // active-config banner directly under the H1
       .replace(/^# .*\n/, (h1) => `${h1}\n${configNote}\n`)
       // §1 — accent description
-      .replace("forest green by", `${accentPhrase[cfg.accent]} by`)
+      .replace("forest green by", `${accentDesc} by`)
       // §2 — light + dark token blocks
       .replace(/:root \{\n[\s\S]*?\n\}/, `:root {\n${tokenBlock("light", cfg)}\n}`)
       .replace(/\.dark \{\n[\s\S]*?\n\}/, `.dark {\n${tokenBlock("dark", cfg)}\n}`)
@@ -159,8 +193,12 @@ export function buildPrompt(cfg: PromptConfig): string {
         /<link href="https:\/\/fonts\.googleapis\.com[^"]*" rel="stylesheet" \/>/,
         `<link href="${fontHref}" rel="stylesheet" />`
       )
-      // §5 — default radius
+      // §5 — default radius + optional full-rounded addendum
       .replace("defaults to **4px**", `defaults to **${cfg.radius}px**`)
+      .replace(
+        "everything rounder/sharper at once.",
+        `everything rounder/sharper at once.${fullRoundedNote}`
+      )
       // §8 — applyTheme defaults match the current selection
       .replace(
         /function applyTheme\(\{[^}]*\}\)/,
