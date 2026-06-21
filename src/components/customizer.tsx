@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "@/components/theme-provider"
@@ -9,6 +10,8 @@ import {
   bases,
   fontNames,
   fonts,
+  isHex,
+  normalizeHex,
 } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
@@ -25,6 +28,7 @@ export function Customizer() {
     theme,
     base,
     accent,
+    customAccent,
     font,
     radius,
     gridOverlay,
@@ -32,11 +36,26 @@ export function Customizer() {
     setTheme,
     setBase,
     setAccent,
+    setCustomAccent,
     setFont,
     setRadius,
     toggleGrid,
     togglePanel,
   } = useTheme()
+
+  // Local draft for the hex text field, kept in sync with the applied color.
+  const [hexDraft, setHexDraft] = useState(customAccent ?? "")
+  useEffect(() => {
+    setHexDraft(customAccent ?? "")
+  }, [customAccent])
+
+  const onHexInput = (value: string) => {
+    setHexDraft(value)
+    if (isHex(value)) setCustomAccent(normalizeHex(value))
+  }
+
+  // Color the native picker shows when no custom color is active yet.
+  const pickerValue = customAccent ?? accents[accent][theme].primary
 
   const seg = (active: boolean) =>
     cn(
@@ -46,8 +65,10 @@ export function Customizer() {
         : "bg-transparent text-muted-foreground"
     )
 
+  const accentLabel = customAccent ? normalizeHex(customAccent).toUpperCase() : accent
+
   const handleDownload = () => {
-    const md = buildPrompt({ theme, accent, base, font, radius })
+    const md = buildPrompt({ theme, accent, customAccent, base, font, radius })
     const url = URL.createObjectURL(
       new Blob([md], { type: "text/markdown;charset=utf-8" })
     )
@@ -59,12 +80,12 @@ export function Customizer() {
     a.remove()
     URL.revokeObjectURL(url)
     toast("Prompt downloaded", {
-      description: `${accent} · ${base} · ${font} · ${radius}px`,
+      description: `${accentLabel} · ${base} · ${font} · ${radius}px`,
     })
   }
 
   const handleCopy = async () => {
-    const md = buildPrompt({ theme, accent, base, font, radius })
+    const md = buildPrompt({ theme, accent, customAccent, base, font, radius })
     try {
       await navigator.clipboard.writeText(md)
       toast("Prompt copied", { description: "Paste it above your build task." })
@@ -113,7 +134,7 @@ export function Customizer() {
             <Caption>ACCENT</Caption>
             <div className="flex flex-wrap gap-[11px]">
               {accentNames.map((name) => {
-                const active = accent === name
+                const active = !customAccent && accent === name
                 return (
                   <button
                     key={name}
@@ -129,6 +150,51 @@ export function Customizer() {
                   />
                 )
               })}
+
+              {/* custom color — pick any hue */}
+              <label
+                title="Custom color"
+                className="relative h-[30px] w-[30px] flex-none cursor-pointer overflow-hidden rounded-full border-2 border-card"
+                style={{
+                  background: customAccent
+                    ? customAccent
+                    : "conic-gradient(from 90deg,#f43f5e,#f59e0b,#22c55e,#3b82f6,#a855f7,#f43f5e)",
+                  boxShadow: customAccent
+                    ? "0 0 0 2px var(--foreground)"
+                    : "0 0 0 1px var(--border)",
+                }}
+              >
+                <input
+                  type="color"
+                  value={pickerValue}
+                  onChange={(e) => setCustomAccent(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </label>
+            </div>
+
+            {/* hex entry + reset for the custom color */}
+            <div className="flex items-center gap-[7px]">
+              <span className="font-mono text-[12px] text-muted-foreground">#</span>
+              <input
+                type="text"
+                value={hexDraft.replace(/^#/, "")}
+                onChange={(e) => onHexInput(e.target.value)}
+                placeholder={pickerValue.replace(/^#/, "")}
+                spellCheck={false}
+                maxLength={6}
+                className="h-[30px] w-[92px] rounded-[calc(var(--radius)-1px)] border border-border bg-background px-[8px] font-mono text-[11px] uppercase tracking-[.06em] text-foreground outline-none focus:border-primary"
+                style={{ borderColor: customAccent ? "var(--primary)" : undefined }}
+              />
+              {customAccent && (
+                <button
+                  onClick={() => setCustomAccent(null)}
+                  title="Back to presets"
+                  className="ml-auto flex h-[30px] cursor-pointer items-center rounded-[calc(var(--radius)-1px)] border border-border bg-secondary px-[10px] font-mono text-[9px] tracking-[.1em] text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  RESET
+                </button>
+              )}
             </div>
           </div>
 
@@ -239,7 +305,7 @@ export function Customizer() {
           <div className="flex items-center justify-between font-mono text-[9px] tracking-[.12em] text-muted-foreground">
             <span>AI BUILD PROMPT</span>
             <span>
-              {accent.toUpperCase()} · {base.toUpperCase()} · {radius}PX
+              {accentLabel.toUpperCase()} · {base.toUpperCase()} · {radius}PX
             </span>
           </div>
           <button

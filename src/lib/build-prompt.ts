@@ -8,7 +8,10 @@ import promptTemplate from "../../grid-design-system.prompt.md?raw"
 import {
   accents,
   bases,
+  deriveAccent,
+  deriveCharts,
   fonts,
+  normalizeHex,
   type AccentName,
   type BaseName,
   type FontName,
@@ -18,6 +21,8 @@ import {
 export type PromptConfig = {
   theme: ThemeMode
   accent: AccentName
+  /** User-picked hex overriding the preset accent, or null for a preset. */
+  customAccent?: string | null
   base: BaseName
   font: FontName
   radius: number
@@ -84,9 +89,13 @@ const familyName = (css: string) => css.split(",")[0].replace(/['"]/g, "").trim(
 // Build a :root / .dark token list from the selected accent + base (+ radius/font
 // on :root only), in the exact order index.css declares them.
 function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
-  const a = accents[cfg.accent][mode]
+  const a = cfg.customAccent ? deriveAccent(cfg.customAccent, mode) : accents[cfg.accent][mode]
   const b = bases[cfg.base][mode]
   const fx = fixedTokens[mode]
+  // Custom accents harmonise all 5 chart series; presets keep the fixed palette.
+  const charts = cfg.customAccent
+    ? deriveCharts(cfg.customAccent, mode)
+    : [a.chart1, fx.chart2, fx.chart3, fx.chart4, fx.chart5]
 
   const rows: [string, string][] = [
     ["--background", b.bg],
@@ -110,11 +119,11 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
     ["--border", b.border],
     ["--input", b.border],
     ["--ring", a.ring],
-    ["--chart-1", a.chart1],
-    ["--chart-2", fx.chart2],
-    ["--chart-3", fx.chart3],
-    ["--chart-4", fx.chart4],
-    ["--chart-5", fx.chart5],
+    ["--chart-1", charts[0]],
+    ["--chart-2", charts[1]],
+    ["--chart-3", charts[2]],
+    ["--chart-4", charts[3]],
+    ["--chart-5", charts[4]],
   ]
 
   // Radius + fonts live only on :root (light) and are shared by both modes.
@@ -131,6 +140,12 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
 
 export function buildPrompt(cfg: PromptConfig): string {
   const modeLabel = cfg.theme === "light" ? "Light" : "Dark"
+  const accentLabel = cfg.customAccent
+    ? `Custom ${normalizeHex(cfg.customAccent)}`
+    : cfg.accent
+  const accentDesc = cfg.customAccent
+    ? `a custom ${normalizeHex(cfg.customAccent)}`
+    : accentPhrase[cfg.accent]
   const sans = familyName(fonts[cfg.font].sans)
   const mono = familyName(fonts[cfg.font].mono)
   const fontLabel = sans === mono ? sans : `${sans} + ${mono}`
@@ -140,7 +155,7 @@ export function buildPrompt(cfg: PromptConfig): string {
 
   const configNote =
     "> **Active configuration** — generated from the live customizer: " +
-    `**${modeLabel}** mode · **${cfg.accent}** accent · **${cfg.base}** base · ` +
+    `**${modeLabel}** mode · **${accentLabel}** accent · **${cfg.base}** base · ` +
     `**${cfg.font}** typeface · **${cfg.radius}px** radius. ` +
     "These choices are baked into the §2 tokens, the font `<head>` link, and the §8 " +
     "defaults below — re-export from the customizer whenever you change them."
@@ -150,7 +165,7 @@ export function buildPrompt(cfg: PromptConfig): string {
       // active-config banner directly under the H1
       .replace(/^# .*\n/, (h1) => `${h1}\n${configNote}\n`)
       // §1 — accent description
-      .replace("forest green by", `${accentPhrase[cfg.accent]} by`)
+      .replace("forest green by", `${accentDesc} by`)
       // §2 — light + dark token blocks
       .replace(/:root \{\n[\s\S]*?\n\}/, `:root {\n${tokenBlock("light", cfg)}\n}`)
       .replace(/\.dark \{\n[\s\S]*?\n\}/, `.dark {\n${tokenBlock("dark", cfg)}\n}`)

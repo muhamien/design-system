@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import {
   accents,
   bases,
+  deriveAccent,
+  deriveCharts,
+  fixedCharts,
   fonts,
   type AccentName,
   type BaseName,
@@ -13,6 +16,8 @@ type ThemeState = {
   theme: ThemeMode
   base: BaseName
   accent: AccentName
+  /** User-picked hex that overrides the preset accent, or null for a preset. */
+  customAccent: string | null
   font: FontName
   radius: number
   gridOverlay: boolean
@@ -24,6 +29,7 @@ type ThemeContextValue = ThemeState & {
   toggleTheme: () => void
   setBase: (b: BaseName) => void
   setAccent: (a: AccentName) => void
+  setCustomAccent: (hex: string | null) => void
   setFont: (f: FontName) => void
   setRadius: (r: number) => void
   toggleGrid: () => void
@@ -45,7 +51,8 @@ function readStoredTheme(): ThemeMode {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(readStoredTheme)
   const [base, setBase] = useState<BaseName>("Stone")
-  const [accent, setAccent] = useState<AccentName>("Forest")
+  const [accent, setAccentState] = useState<AccentName>("Forest")
+  const [customAccent, setCustomAccent] = useState<string | null>(null)
   const [font, setFont] = useState<FontName>("Inter")
   const [radius, setRadius] = useState<number>(4)
   const [gridOverlay, setGridOverlay] = useState<boolean>(true)
@@ -58,14 +65,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle("dark", theme === "dark")
 
     const s = root.style
-    const a = (accents[accent] ?? accents.Forest)[theme]
+    const a = customAccent
+      ? deriveAccent(customAccent, theme)
+      : (accents[accent] ?? accents.Forest)[theme]
     s.setProperty("--primary", a.primary)
     s.setProperty("--primary-foreground", a.primaryFg)
     s.setProperty("--ring", a.ring)
     s.setProperty("--accent", a.accent)
     s.setProperty("--accent-foreground", a.accentFg)
-    s.setProperty("--chart-1", a.chart1)
     s.setProperty("--radius", `${radius}px`)
+
+    // Chart palette: a custom accent harmonises all 5 series around its hue;
+    // presets keep chart-1 on-accent and restore the fixed data palette.
+    const charts = customAccent
+      ? deriveCharts(customAccent, theme)
+      : [a.chart1, ...fixedCharts[theme]]
+    charts.forEach((c, i) => s.setProperty(`--chart-${i + 1}`, c))
 
     const f = fonts[font] ?? fonts.Inter
     s.setProperty("--font-sans", f.sans)
@@ -84,7 +99,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     s.setProperty("--muted-foreground", b.mutedFg)
     s.setProperty("--border", b.border)
     s.setProperty("--input", b.border)
-  }, [theme, base, accent, font, radius])
+  }, [theme, base, accent, customAccent, font, radius])
 
   const setTheme = (t: ThemeMode) => {
     setThemeState(t)
@@ -95,10 +110,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Selecting a preset accent clears any active custom color.
+  const setAccent = (a: AccentName) => {
+    setAccentState(a)
+    setCustomAccent(null)
+  }
+
   const value: ThemeContextValue = {
     theme,
     base,
     accent,
+    customAccent,
     font,
     radius,
     gridOverlay,
@@ -107,6 +129,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     toggleTheme: () => setTheme(theme === "light" ? "dark" : "light"),
     setBase,
     setAccent,
+    setCustomAccent,
     setFont,
     setRadius,
     toggleGrid: () => setGridOverlay((v) => !v),
