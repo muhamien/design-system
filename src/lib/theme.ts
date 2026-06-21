@@ -189,8 +189,8 @@ function retone(hex: string, l: number, sx = 1): string {
  *  (Material's "on" color — the higher-contrast of the two tonal extremes). */
 function onColor(bg: string): string {
   const [h, s] = hexToHsl(bg)
-  const light = hslToHex(h, Math.min(s, 0.16), 0.97)
-  const dark = hslToHex(h, Math.min(s, 0.3), 0.12)
+  const light = hslToHex(h, Math.min(s, 0.12), 0.98)
+  const dark = hslToHex(h, Math.min(s, 0.28), 0.1)
   return contrast(dark, bg) >= contrast(light, bg) ? dark : light
 }
 
@@ -258,4 +258,37 @@ export function deriveCharts(hex: string, mode: ThemeMode): string[] {
 export const fixedCharts: Record<ThemeMode, [string, string, string, string]> = {
   light: ["#6a994e", "#9a6a12", "#3a6ea5", "#a23b6b"],
   dark: ["#8cbf6a", "#d2a23a", "#5e93cf", "#c96a98"],
+}
+
+/** Danger red, *harmonised* to the accent (Material-3 style): it leans toward
+ *  the accent's hue and borrows its saturation so it reads as part of one
+ *  palette — but the lean is *directional*, generous toward crimson yet barely
+ *  toward orange, so it never drifts into warning territory and stays a
+ *  recognisable danger red. Foreground meets WCAG AA. */
+export function deriveDestructive(
+  accentHex: string,
+  mode: ThemeMode
+): { color: string; fg: string } {
+  const ANCHOR = 8 // a pure danger red
+  const [aH, aS] = hexToHsl(accentHex)
+  const delta = ((aH - ANCHOR + 540) % 360) - 180 // signed shortest angle to accent
+  // Cool accents may pull the red up to 16° toward crimson; warm accents only
+  // 6° toward orange — past that it would look like a warning, not a danger.
+  const shift = delta >= 0 ? Math.min(delta, 6) : Math.max(delta, -16)
+  const hue = (ANCHOR + shift + 360) % 360
+  // Keep it punchy, but let a muted theme mute the red and a vivid one keep it vivid.
+  const sat = Math.min(0.72, Math.max(0.5, 0.6 + 0.25 * (aS - 0.6)))
+  // Start near the preset lightness, then nudge it (brighter on dark, deeper on
+  // light) until the "on" color clears WCAG AA — escaping the mid-tone trap where
+  // neither black nor white text passes (e.g. a crimson at 54% lightness).
+  const dir = mode === "dark" ? 0.02 : -0.02
+  let l = mode === "dark" ? 0.54 : 0.44
+  let color = hslToHex(hue, sat, l)
+  let fg = onColor(color)
+  for (let i = 0; i < 12 && contrast(fg, color) < 4.5; i++) {
+    l = clamp01(l + dir)
+    color = hslToHex(hue, sat, l)
+    fg = onColor(color)
+  }
+  return { color, fg }
 }

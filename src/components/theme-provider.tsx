@@ -4,6 +4,7 @@ import {
   bases,
   deriveAccent,
   deriveCharts,
+  deriveDestructive,
   fixedCharts,
   fonts,
   type AccentName,
@@ -81,6 +82,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       ? deriveCharts(customAccent, theme)
       : [a.chart1, ...fixedCharts[theme]]
     charts.forEach((c, i) => s.setProperty(`--chart-${i + 1}`, c))
+
+    // Destructive: harmonise the danger red to the active accent's hue so the
+    // semantic colors feel like one theme (custom or preset).
+    const accentHex = customAccent ?? a.primary
+    const dz = deriveDestructive(accentHex, theme)
+    s.setProperty("--destructive", dz.color)
+    s.setProperty("--destructive-foreground", dz.fg)
 
     const f = fonts[font] ?? fonts.Inter
     s.setProperty("--font-sans", f.sans)

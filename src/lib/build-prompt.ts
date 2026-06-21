@@ -10,6 +10,7 @@ import {
   bases,
   deriveAccent,
   deriveCharts,
+  deriveDestructive,
   fonts,
   normalizeHex,
   type AccentName,
@@ -31,11 +32,10 @@ export type PromptConfig = {
 export const promptFileName = "grid-design-system.prompt.md"
 
 // Tokens the customizer does NOT expose — fixed per mode, mirroring index.css.
+// (destructive is now harmonised per-accent — see deriveDestructive below.)
 const fixedTokens: Record<
   ThemeMode,
   {
-    destructive: string
-    destructiveFg: string
     success: string
     warning: string
     chart2: string
@@ -45,8 +45,6 @@ const fixedTokens: Record<
   }
 > = {
   light: {
-    destructive: "#b03a2b",
-    destructiveFg: "#fdf6f5",
     success: "#2e6b48",
     warning: "#9a6a12",
     chart2: "#6a994e",
@@ -55,8 +53,6 @@ const fixedTokens: Record<
     chart5: "#a23b6b",
   },
   dark: {
-    destructive: "#d4543f",
-    destructiveFg: "#160605",
     success: "#5aa777",
     warning: "#d2a23a",
     chart2: "#8cbf6a",
@@ -96,6 +92,8 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
   const charts = cfg.customAccent
     ? deriveCharts(cfg.customAccent, mode)
     : [a.chart1, fx.chart2, fx.chart3, fx.chart4, fx.chart5]
+  // Danger red harmonised to the active accent so the palette reads as one theme.
+  const dz = deriveDestructive(cfg.customAccent ?? a.primary, mode)
 
   const rows: [string, string][] = [
     ["--background", b.bg],
@@ -112,8 +110,8 @@ function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
     ["--muted-foreground", b.mutedFg],
     ["--accent", a.accent],
     ["--accent-foreground", a.accentFg],
-    ["--destructive", fx.destructive],
-    ["--destructive-foreground", fx.destructiveFg],
+    ["--destructive", dz.color],
+    ["--destructive-foreground", dz.fg],
     ["--success", fx.success],
     ["--warning", fx.warning],
     ["--border", b.border],

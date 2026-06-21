@@ -1,6 +1,6 @@
 import { Section, SectionHeader } from "@/components/sections/section"
 import { useTheme } from "@/components/theme-provider"
-import { accents, bases, deriveAccent } from "@/lib/theme"
+import { accents, bases, deriveAccent, deriveDestructive } from "@/lib/theme"
 
 type ColorToken = { v: string; r: string; l: string; d: string }
 
@@ -15,6 +15,9 @@ export function ColorsSection() {
   const accD = customAccent ? deriveAccent(customAccent, "dark") : accents[accent].dark
   const bL = bases[base].light
   const bD = bases[base].dark
+  // Danger red harmonised to the active accent's hue (custom or preset).
+  const dzL = deriveDestructive(customAccent ?? accL.primary, "light").color
+  const dzD = deriveDestructive(customAccent ?? accD.primary, "dark").color
 
   const colorTokens: ColorToken[] = [
     { v: "--background", r: "Page base", l: bL.bg, d: bD.bg },
@@ -25,8 +28,7 @@ export function ColorsSection() {
     { v: "--primary", r: "Signal / CTA", l: accL.primary, d: accD.primary },
     { v: "--secondary", r: "Quiet action", l: bL.sec, d: bD.sec },
     { v: "--accent", r: "Hover tint", l: accL.accent, d: accD.accent },
-    // Fixed per mode — not exposed by the customizer (mirrors index.css).
-    { v: "--destructive", r: "Danger", l: "#b03a2b", d: "#d4543f" },
+    { v: "--destructive", r: "Danger", l: dzL, d: dzD },
     { v: "--border", r: "Hairlines", l: bL.border, d: bD.border },
     { v: "--ring", r: "Focus ring", l: accL.ring, d: accD.ring },
   ]
