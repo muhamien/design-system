@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { useTheme } from "@/components/theme-provider"
 import { ButtonsSection } from "@/components/sections/buttons"
 import { CardsSection } from "@/components/sections/cards"
+import { ChartsSection } from "@/components/sections/charts"
 import { ColorsSection } from "@/components/sections/colors"
 import { FormsSection } from "@/components/sections/forms"
 import { Masthead } from "@/components/sections/masthead"
@@ -57,6 +58,7 @@ export default function App() {
         <FormsSection />
         <CardsSection />
         <TabsTableSection />
+        <ChartsSection />
         <OverlaysSection />
         <Footer />
         <div className="h-[48px]" />

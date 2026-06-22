@@ -15,8 +15,8 @@
   **same visual output** using the same tokens — don't copy framework structure blindly.
 - **Use shadcn/ui components as-is.** Install them with the CLI (`npx shadcn@latest add button card …`,
   **new-york** style) and keep their **standard sizes and structure** (`data-slot`, lucide-react icons,
-  `focus-visible` rings, `aria-invalid` handling). The Grid identity comes from the **tokens** (§2) +
-  **layout conventions** (§7) — *not* from re-sizing components. Also install `tw-animate-css`
+  `focus-visible` rings, `aria-invalid` handling). The Grid identity comes from the **tokens** (§2) —
+  *not* from re-sizing components. Also install `tw-animate-css`
   (overlay animations) and `sonner` (toasts).
 - **Tokens are law.** Never hardcode a hex/rgb color, font family, radius, or ad-hoc
   spacing that bypasses the tokens in §2. If a value isn't covered, derive it from a
@@ -29,18 +29,14 @@
 
 ## 1. Design philosophy
 
-Grid is a precise, technical, shadcn-compatible system. Five pillars:
+Grid is a precise, technical, shadcn-compatible design system — tokens and components,
+not a fixed page template. Three pillars:
 
-1. **Hairline structure.** 1px `--border` lines frame and separate everything. Content
-   lives in a centered max-width column with continuous left/right rails.
-2. **Monospaced annotations.** Section numbers, eyebrows, metadata captions, and structural
-   labels — the page *chrome* — use the **mono** font, **UPPERCASE**, with wide letter-spacing.
-   Body, headings, and the shadcn components themselves use the **sans** font.
-3. **One signal color.** A single restrained accent (`--primary`, forest green by
+1. **One signal color.** A single restrained accent (`--primary`, forest green by
    default) for CTAs, focus rings, active/selected states. Everything else is neutral.
-4. **Flat & quiet.** No gradients. Shadows only on floating overlays. Low-chroma
+2. **Flat & quiet.** No gradients. Shadows only on floating overlays. Low-chroma
    neutrals, generous negative space, calm density.
-5. **Token-driven & themeable.** Light/dark plus swappable accent / base palette /
+3. **Token-driven & themeable.** Light/dark plus swappable accent / base palette /
    typeface / radius, all driven by CSS variables that can change at runtime.
 
 ---
@@ -187,7 +183,7 @@ Grid is a precise, technical, shadcn-compatible system. Five pillars:
 | Heading 3 | sans | 17          | 500    | normal   | Card / subsection title                        |
 | Body      | sans | 14 / 1.5    | 400    | normal   | Paragraphs (use `--muted-foreground` for secondary) |
 | Small     | sans | 13          | 400    | normal   | Captions, helper text (`--muted-foreground`)   |
-| Mono      | mono | 11–12       | 500    | 0.06em   | **UPPERCASE** chrome: section numbers, eyebrows, metadata captions (often `--primary`) |
+| Mono      | mono | 12–13       | 500    | normal   | Code, keyboard keys, tabular numerals (`--font-mono`)                            |
 
 Hero headline may use `font-size: clamp(38px, 6vw, 62px)`.
 
@@ -221,7 +217,7 @@ utilities derive from it, matching shadcn:
 ## 6. Component specs
 
 Install with the shadcn CLI (`npx shadcn@latest add …`, new-york style) and use them
-**unmodified** — the Grid look comes from the tokens (§2) and layout (§7), not from
+**unmodified** — the Grid look comes from the tokens (§2), not from
 re-sizing. Below is the standard shadcn sizing/structure so you know what each ships with
 and how to compose it. All components carry `data-slot`, lucide icons, `transition`, and
 `focus-visible:ring-ring/50 ring-[3px]` focus.
@@ -262,7 +258,7 @@ and how to compose it. All components carry `data-slot`, lucide icons, `transiti
 - `rounded-xl border bg-card py-6 shadow-sm`, vertical `gap-6`.
 - Compose `CardHeader` / `CardTitle` / `CardDescription` / `CardAction` (top-right slot) /
   `CardContent` / `CardFooter`. Add `border-b` on the header / `border-t` on the footer for
-  hairline-separated sections (shadcn auto-pads them). Big stat numbers: `text-2xl font-semibold tabular-nums`.
+  border-separated sections (shadcn auto-pads them). Big stat numbers: `text-2xl font-semibold tabular-nums`.
 
 ### Tabs — `add tabs`
 - List `h-9 bg-muted rounded-lg p-[3px]`; triggers `flex-1 rounded-md text-sm font-medium`,
@@ -273,12 +269,25 @@ and how to compose it. All components carry `data-slot`, lucide icons, `transiti
 - Right-align + `font-mono text-xs` for numeric columns; render status in a `Badge`.
   Wrap in `rounded-lg border overflow-hidden`.
 
+### Chart — `add chart`
+- Recharts-based. Install `recharts`, then `add chart` brings `ChartContainer` /
+  `ChartTooltip` / `ChartTooltipContent` / `ChartLegend` / `ChartLegendContent` + the
+  `ChartConfig` type. Render charts inside a `Card`.
+- **Series colors come from the chart tokens** (`--chart-1` … `--chart-5`) via `ChartConfig`
+  (`{ desktop: { label: "Desktop", color: "var(--chart-1)" } }`) — never hardcode a hue.
+  `ChartContainer` exposes each as `--color-<key>` for the Recharts `fill`/`stroke`.
+- Area chart (reference: <https://ui.shadcn.com/charts/area>): `<AreaChart>` with
+  `<CartesianGrid vertical={false} />`, a bare `<XAxis tickLine={false} axisLine={false} />`,
+  `type="natural"`, `fillOpacity ≈ 0.4` (or a `<linearGradient>` fill); tooltip via
+  `<ChartTooltip content={<ChartTooltipContent />} />`, optional `<ChartLegend content={<ChartLegendContent />} />`.
+- Keep it flat: grid lines and axis ticks inherit `--border` / `--muted-foreground` from the
+  wrapper, no extra shadows — and the chart re-themes live when the tokens change.
+
 ### Dialog — `add dialog`
 - Overlay `bg-black/50` (animated). Content centered, `max-w-lg rounded-lg border p-6 gap-4 shadow-lg`,
   with a built-in top-right close (`XIcon`).
 - Compose `DialogHeader` / `DialogTitle` (`text-lg font-semibold`) / `DialogDescription` /
-  `DialogFooter` (right-aligned: outline cancel + default confirm). Add a mono `--primary`
-  eyebrow inside the header for the Grid feel.
+  `DialogFooter` (right-aligned: outline cancel + default confirm).
 
 ### Dropdown menu — `add dropdown-menu`
 - `bg-popover rounded-md border p-1 shadow-md`, `min-w-[8rem]`.
@@ -308,17 +317,16 @@ default; respect `prefers-reduced-motion`.
 
 ---
 
-## 7. Layout & page conventions
+## 7. Layout & composition
 
-This is where the Grid identity lives — apply it *around* the standard shadcn components.
+The system ships tokens and components, not a fixed page template — lay out each screen to
+fit the product. A few neutral defaults so everything still feels related:
 
-- Centered column: `max-width 1200px; margin 0 auto; horizontal padding 28px`.
-- Frame every major section with **continuous 1px left/right rails** (`border-left`/`border-right` in `--border`); separate stacked blocks with 1px bottom borders.
-- **Section header pattern:** mono number in `--primary` · `14px/600` title · a flexible `1px` rule line · optional mono right-label. Example:
-  `01 ──  Color tokens ─────────────────── SEMANTIC · LIVE`
-- Optional decorative **72px background grid**: `linear-gradient(var(--border) 1px, transparent 1px)` both axes, `background-size: 72px 72px`, `opacity ~.4`, behind content, `pointer-events:none`.
-- Two-column layouts split with a 1px vertical `--border` divider.
-- Page base: `bg --background; color --foreground; font-sans; antialiased`.
+- Compose on the spacing scale (§4); keep generous, calm negative space and a clear hierarchy.
+- Use comfortable, readable content widths and make every screen fully responsive.
+- Keep surfaces flat: lean on each component's built-in 1px `--border` for separation and
+  reserve shadows for floating overlays (dialogs, menus, popovers, toasts).
+- Page base: `bg --background; color --foreground; font-sans; antialiased`. Verify light **and** dark.
 
 ---
 
@@ -375,8 +383,8 @@ class toggle.
 **DO**
 - Use tokens for every color/font/radius; derive variants with `color-mix`.
 - Install shadcn/ui components (new-york) and use them **as shipped** — restyle via tokens, not by editing sizes.
-- Use mono + UPPERCASE + wide tracking for the page chrome (section numbers, eyebrows, metadata captions). Let shadcn components keep their standard sans typography.
-- Frame with 1px hairlines; keep surfaces flat.
+- Let shadcn components keep their standard sans typography; reserve the **mono** font for code and tabular numerals.
+- Keep surfaces flat; reserve shadows for floating overlays.
 - Let the radius scale + each component's default corners do the work (`rounded-md` / `-lg` / `-xl`).
 - Keep shadcn's focus style (`focus-visible:ring-ring/50 ring-[3px]`) and token-opacity hovers (`hover:bg-primary/90`, `hover:bg-accent`).
 - Support light **and** dark; verify contrast in both.
@@ -388,7 +396,7 @@ class toggle.
 - Never fork shadcn component sizing or structure — use them as installed; theme only through tokens.
 - Never use gradients, glows, or heavy shadows (shadows only on floating overlays).
 - Never use large/pill radii except where specified (full = switch, dots, avatars, pills).
-- Never mix font families arbitrarily — only sans (content + components) and mono (chrome labels).
+- Never mix font families arbitrarily — only sans (content + components) and mono (code / tabular numerals).
 - Never add decorative borders thicker than 1px.
 
 ---
