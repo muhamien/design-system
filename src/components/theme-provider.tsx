@@ -42,25 +42,49 @@ type ThemeContextValue = ThemeState & {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function readStoredTheme(): ThemeMode {
+const STORAGE_KEY = "grid-customizer-v1"
+
+type PersistedState = {
+  theme?: ThemeMode
+  base?: BaseName
+  accent?: AccentName
+  customAccent?: string | null
+  font?: FontName
+  radius?: number
+  fullRounded?: boolean
+  gridOverlay?: boolean
+}
+
+function readStored(): PersistedState {
   try {
-    const t = localStorage.getItem("grid-theme")
-    if (t === "light" || t === "dark") return t
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return JSON.parse(raw) as PersistedState
   } catch {
     /* ignore */
   }
-  return "light"
+  return {}
+}
+
+function writeStored(state: PersistedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    /* ignore */
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(readStoredTheme)
-  const [base, setBase] = useState<BaseName>("Stone")
-  const [accent, setAccentState] = useState<AccentName>("Forest")
-  const [customAccent, setCustomAccent] = useState<string | null>(null)
-  const [font, setFont] = useState<FontName>("Inter")
-  const [radius, setRadius] = useState<number>(4)
-  const [fullRounded, setFullRounded] = useState<boolean>(false)
-  const [gridOverlay, setGridOverlay] = useState<boolean>(true)
+  const stored = readStored()
+  const [theme, setThemeState] = useState<ThemeMode>(
+    stored.theme === "light" || stored.theme === "dark" ? stored.theme : "light"
+  )
+  const [base, setBase] = useState<BaseName>(stored.base ?? "Stone")
+  const [accent, setAccentState] = useState<AccentName>(stored.accent ?? "Forest")
+  const [customAccent, setCustomAccent] = useState<string | null>(stored.customAccent ?? null)
+  const [font, setFont] = useState<FontName>(stored.font ?? "Inter")
+  const [radius, setRadius] = useState<number>(stored.radius ?? 4)
+  const [fullRounded, setFullRounded] = useState<boolean>(stored.fullRounded ?? false)
+  const [gridOverlay, setGridOverlay] = useState<boolean>(stored.gridOverlay ?? true)
   const [panelOpen, setPanelOpen] = useState<boolean>(true)
 
   // Apply tokens to <html> — a 1:1 port of the prototype's applyTokens().
@@ -116,14 +140,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     s.setProperty("--input", b.border)
   }, [theme, base, accent, customAccent, font, radius, fullRounded])
 
-  const setTheme = (t: ThemeMode) => {
-    setThemeState(t)
-    try {
-      localStorage.setItem("grid-theme", t)
-    } catch {
-      /* ignore */
-    }
-  }
+  // Persist all customizer state on every change.
+  useEffect(() => {
+    writeStored({ theme, base, accent, customAccent, font, radius, fullRounded, gridOverlay })
+  }, [theme, base, accent, customAccent, font, radius, fullRounded, gridOverlay])
+
+  const setTheme = (t: ThemeMode) => setThemeState(t)
 
   // Selecting a preset accent clears any active custom color.
   const setAccent = (a: AccentName) => {

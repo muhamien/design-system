@@ -4,6 +4,7 @@ import { useTheme } from "@/components/theme-provider"
 import { ButtonsSection } from "@/components/sections/buttons"
 import { CardsSection } from "@/components/sections/cards"
 import { ChartsSection } from "@/components/sections/charts"
+import { IconsSection } from "@/components/sections/icons"
 import { ColorsSection } from "@/components/sections/colors"
 import { FormsSection } from "@/components/sections/forms"
 import { Masthead } from "@/components/sections/masthead"
@@ -59,6 +60,7 @@ export default function App() {
         <CardsSection />
         <TabsTableSection />
         <ChartsSection />
+        <IconsSection />
         <OverlaysSection />
         <Footer />
         <div className="h-[48px]" />

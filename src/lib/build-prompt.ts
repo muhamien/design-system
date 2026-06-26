@@ -11,6 +11,7 @@ import {
   deriveAccent,
   deriveCharts,
   deriveDestructive,
+  fixedCharts,
   fonts,
   normalizeHex,
   type AccentName,
@@ -42,35 +43,11 @@ const PILL_OVERRIDE_CSS = [
   "}",
 ].join("\n")
 
-// Tokens the customizer does NOT expose — fixed per mode, mirroring index.css.
-// (destructive is now harmonised per-accent — see deriveDestructive below.)
-const fixedTokens: Record<
-  ThemeMode,
-  {
-    success: string
-    warning: string
-    chart2: string
-    chart3: string
-    chart4: string
-    chart5: string
-  }
-> = {
-  light: {
-    success: "#2e6b48",
-    warning: "#9a6a12",
-    chart2: "#6a994e",
-    chart3: "#9a6a12",
-    chart4: "#3a6ea5",
-    chart5: "#a23b6b",
-  },
-  dark: {
-    success: "#5aa777",
-    warning: "#d2a23a",
-    chart2: "#8cbf6a",
-    chart3: "#d2a23a",
-    chart4: "#5e93cf",
-    chart5: "#c96a98",
-  },
+// Fixed semantic tokens not exposed in the customizer (success/warning only —
+// chart2-5 are sourced from fixedCharts in theme.ts to avoid duplication).
+const semanticFixed: Record<ThemeMode, { success: string; warning: string }> = {
+  light: { success: "#2e6b48", warning: "#9a6a12" },
+  dark: { success: "#5aa777", warning: "#d2a23a" },
 }
 
 // Google Fonts families (sans + mono) per typeface — drives the <head> link.
@@ -98,11 +75,11 @@ const familyName = (css: string) => css.split(",")[0].replace(/['"]/g, "").trim(
 function tokenBlock(mode: ThemeMode, cfg: PromptConfig): string {
   const a = cfg.customAccent ? deriveAccent(cfg.customAccent, mode) : accents[cfg.accent][mode]
   const b = bases[cfg.base][mode]
-  const fx = fixedTokens[mode]
+  const fx = semanticFixed[mode]
   // Custom accents harmonise all 5 chart series; presets keep the fixed palette.
   const charts = cfg.customAccent
     ? deriveCharts(cfg.customAccent, mode)
-    : [a.chart1, fx.chart2, fx.chart3, fx.chart4, fx.chart5]
+    : [a.chart1, ...fixedCharts[mode]]
   // Danger red harmonised to the active accent so the palette reads as one theme.
   const dz = deriveDestructive(cfg.customAccent ?? a.primary, mode)
 
