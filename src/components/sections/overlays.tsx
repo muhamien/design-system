@@ -38,7 +38,7 @@ const menuItems = [
 export function OverlaysSection() {
   return (
     <Section className="border-b">
-      <SectionHeader num="10" title="Overlays" right="DIALOG · MENU · TOOLTIP · TOAST" />
+      <SectionHeader num="12" title="Overlays" right="DIALOG · MENU · TOOLTIP · TOAST" />
 
       <div className="flex flex-wrap items-center gap-[14px] px-[20px] py-[26px]">
         {/* dialog */}
